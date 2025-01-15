@@ -1,0 +1,149 @@
+\documentclass[12pt]{report}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\RequirePackage{helvet}
+\usepackage{graphicx}
+\usepackage{forest}
+\usepackage{listings}
+\usepackage{amsmath}
+
+% Section formatting
+\titleformat{\chapter}{\normalfont\large\bfseries}{\makebox[1.5cm][l]{\thechapter}}{0pt}{}
+\titlespacing*{\chapter}{0pt}{-16pt plus 2pt minus 2pt}{8pt plus 2pt minus 2pt}
+
+\titleformat{\section}{\normalfont\bfseries}{\makebox[1.5cm][l]{\thesection}}{0pt}{}
+\titlespacing*{\section}{0pt}{12pt plus 2pt minus 2pt}{6pt plus 2pt minus 2pt}
+
+\titleformat{\subsection}{\normalfont\bfseries}{\makebox[1.5cm][l]{\thesubsection}}{0pt}{}
+\titlespacing{\subsection}{0pt}{12pt plus 2pt minus 2pt}{6pt plus 2pt minus 2pt}
+
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+% Move hyperref to the end and add configuration
+\usepackage[
+    hidelinks,
+    bookmarks=true,
+    bookmarksopen=true,
+    bookmarksnumbered=true,
+    breaklinks=true,
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue,
+    hyperfootnotes=true,
+    pdftoolbar=true,
+    pdfpagemode=UseOutlines
+]{hyperref}
+
+% Add this after hyperref to ensure proper linking
+\makeatletter
+\renewcommand*{\bibsetup}{%
+  \interlinepenalty=5000\relax
+  \widowpenalty=10000\relax
+  \clubpenalty=10000\relax
+  \raggedbottom
+  \frenchspacing
+  \tolerance=2000
+  \emergencystretch=2em
+  \setlength{\bibhang}{\labelsep}%
+}
+\makeatother
+
+
+\begin{document}
+
+
+% Title Page
+\begin{titlepage}
+\begin{flushright} 
+        \includegraphics[width=8cm]{kiu.jpg} % 
+    \end{flushright}
+    \begin{center}
+       % \vspace*{2cm}
+        \Huge
+        \textbf{GoSeek - High Performance Search Engine}
+        
+        \LARGE
+       \textbf{Bachelor's Thesis in Computer Science}
+\end{center}
+        
+\begin{center}
+        \textbf{Written by}\\
+        Romani Todua
+        Student ID number: 42001036235
+
+        \vfill
+
+        Kutaisi International University \\[0.3cm]
+        School of Math and Computer Science
+
+        \vfill
+    \end{center}
+        Supervisor: Ia Mosashvili
+        Date of submission: 01/15/2025
+    
+\end{titlepage}
+
+% Declaration of Integrity
+\section*{Declaration of Integrity}
+I hereby confirm that I have completed this work without external assistance and without using any sources other than those specified, and that this work has not been submitted in the same or similar form to any other authority. All material that has been quoted or paraphrased is cited as such. \\
+I have read and acknowledged the policies proposed by Kutaisi International University for the bachelor's theses, particularly the regulations regarding usage rights.
+
+\vspace{2cm}
+Date and Place: 1/15/2025 Kutaisi\\
+
+Student's Signature: R.Todua
+\clearpage
+
+% Abstract
+\begin{center}
+    \chapter*{Abstract} 
+    \addcontentsline{toc}{chapter}{Abstract} 
+\end{center}
+\input{abstract.tex}
+\newpage
+% Table of Contents
+
+\tableofcontents
+\renewcommand{\tableofcontents}{
+    {
+        \clearpage
+        \pdfbookmark[0]{\contentsname}{contents}
+        \setlength{\parskip}{0pt}
+        \setcounter{tocdepth}{1}
+        \default@tableofcontents
+        \markboth{\contentsname}{\contentsname}
+    }
+    \pagebreak%
+}
+
+
+\newpage
+
+\clearpage
+\input{introduction.tex}
+
+\clearpage
+\input{methods.tex}
+
+\clearpage
+\input{results.tex}
+
+\clearpage
+\input{conclusions.tex}
+
+\appendix
+\chapter{Appendix}
+\begin{itemize}
+    \item For more detailed look please the the source code of the project - \\ https://github.com/romanitodua/capstone-project-search-engine
+    \item For exploring the logs more in detail please see the \textbf{/logs} directory of the source code
+    \item For developer build please see the \textbf{dev} branch of the source code
+\end{itemize}
+
+% References
+\printbibliography[heading=bibintoc] 
+\end{document}

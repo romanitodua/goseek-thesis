@@ -1,0 +1,330 @@
+\chapter{Methods}
+    \section{Project Structure}
+        Project structure is chosen by incorporating best coding practices such as DRY and SOLID while following language specific guidelines.
+    \begin{description}
+        \item[\texttt{cmd}] This package provides the command-line interface (CLI) implementation for the search engine, enabling executing of commands.
+        \item[\texttt{engine}] Contains the core logic of the search engine, including searching and tokenizing user query
+        \item[\texttt{engineLogger}] Responsible for logging the search engine's operations, performance metrics, and debugging information.
+        \item[\texttt{models}] Defines the data structures and models used across the application, such as document representations and search results.
+        \item[\texttt{stemmer}] Handles stemming\cite{porter_stemmer} of a single word
+        \item[\texttt{strategies}] Implements various search and optimization strategies, such as quick-sort,bitonic-sort and KMP.
+        \item[\texttt{utils}] Provides utility functions and helper methods used across the application for common tasks.
+    \end{description}
+
+    \section{Folder Structure}
+    A visual representation of the project folder structure is shown below:
+
+    \begin{forest}
+        for tree={
+            font=\ttfamily,
+            grow=east,
+            edge+={thick},
+            parent anchor=east,
+            child anchor=west,
+            align=center,
+        }
+        [search-engine
+        [cmd
+        [crawl.go]
+        [helpers.go]
+        [parse.go]
+        [patternMatch.go]
+        [search.go]
+        [root.go]
+        ]
+        [engine
+        [htmlEngine.go]
+        ]
+        [engineLogger
+        [logger.go]
+        [patternMatchingLogger.go]
+        [quickSortLogger.go]
+        [bitonicSortLogger.go]
+        ]
+        [models
+        [tfidf.go]
+        [strategies.go]
+        ]
+        [stemmer
+        [stemmer.go]
+        ]
+        [strategies
+        [bitonicSort.go]
+        [patternMatch.go]
+        [quickSort.go]
+        ]
+        [utils
+        [formatters.go]
+        ]
+        [main.go]
+        ]
+    \end{forest}
+
+    \section{Models}
+    To encapsulate and organize information for subsequent processing, Goseek utilizes Golang's \texttt{struct}\cite{golang} type. Mostly used struct is the \texttt{TFIDF} struct, which is designed to store the fields necessary for implementing the TF-IDF algorithm\cite{wikipedia_tf_idf}. This struct includes the following fields:
+
+\begin{itemize}
+    \item \texttt{terms}: representing the user's search input,
+    \item \texttt{document}: denoting the name of the current file being processed,
+    \item \texttt{tf}: the term frequency,
+    \item \texttt{idf}: the inverse document frequency, and
+    \item \texttt{tfidf}: the calculated TF-IDF value for ranking purposes.
+\end{itemize}
+
+The \texttt{TFIDF} struct plays a crucial role in the project by enabling the searching and ranking of documents based on the TF-IDF algorithm. The functions \texttt{GetMaxTFIDF} and \texttt{GetMinTFIDF} are defined on this struct to retrieve the maximum and minimum TF-IDF values, respectively. The \texttt{Less} method determines the ranking of a document based on its TF-IDF score.Additionally, the \texttt{GetTFIDFElements} function although it is not directly defined on the struct returns a string representation of each document, along with its corresponding TF-IDF value, when provided with a slice of TF-IDF scores.All mentioned methods are used for sorting (Less,GetMin,GetMax) and logging(GetTFIDFElements)
+
+The \texttt{DocumentTF} and \texttt{Documents} type aliases are used to represent the data as a map of maps, where the key is the document name and the value is another map that associates each term with its frequency within the document.
+
+\section{Algorithms}
+\subsection{Porter Stemming Algorithm}
+
+
+The Porter Stemming Algorithm is a widely-used stemming algorithm in natural language processing (NLP) that reduces words to their root form. This is essential in search engines and information retrieval systems to improve matching between queries and documents. In this section, we will describe how the algorithm is implemented in the provided \texttt{Stem} function and discuss its importance in search engines.
+
+The \texttt{Stem} function takes a word as input and processes it through several steps to reduce it to its stemmed form. The function is structured as follows:
+
+\begin{lstlisting}[language=Go]
+func Stem(term string) string {
+    body := []byte(term)
+    word := bytes.TrimSpace(bytes.ToLower(body))
+    if len(word) > 2 {
+        return string(five_b(five_a(four(three(two(one_c(one_b(one_a(word)))))))))
+    }
+    return string(word)
+}
+\end{lstlisting}
+the word is processed by the auxiliary 8 functions and returned back with a stemmed form. this functions are defined by Porter Stemming algorithm which can in detail be found in the source code of the project.
+
+Stemming is crucial for search engines because it helps in reducing words to their root form, improving the matching of user queries with document contents. For example, a search query for the word "running" should also match documents containing "run," "runner," or "runs." By stemming words, \\ 
+search engines can treat these variations as equivalent, leading to better retrieval results and improved search accuracy. \\ 
+
+That is precisely how Goseek's search works. user query is stemmed and matched against the stemmed contents of the documents. This process will be explored in later subsections
+
+\subsection{Bitonic Sort}
+Bitonic Sort \cite{bitonic_sorter}is an advanced sorting algorithm that uses parallel computation.\\
+The algorithm works by recursively dividing an array into smaller subarrays, sorting them into ascending and descending sequences (known as a bitonic sequence), and then merging them into a single sorted sequence. Each division of the arrays is processed on separate threads. Though bitonic sort seems like a very fast choice for sorting but  it has its drawbacks. One key prerequisite for Bitonic Sort to work efficiently the number of elements in the array must be power of two. This can make sorting small amounts of data really non-efficient, but efficient for large amounts of data suited for search engines like GoSeek. To work around this problem I have implemented a strategy where before sorting data dummy elements are added to up to the length of the next power of two. Since Bitonic Sort's each run have their own array there is no thread safety implemented for sorting , but it's needed for logging which will be discussed in later chapter. For more technical implementation please see the source code of the project.
+
+
+\subsection{Quick Sort}
+Quick Sort\cite{quicksort} is a widely used and efficient sorting algorithm based on the divide-and-conquer paradigm. It works by selecting a "pivot" element from the array and partitioning the other elements into two subarrays: those less than the pivot and those greater than or equal to the pivot. The process is then recursively applied to the subarrays. Quick Sort was chosen to implement to rival Bitonic Sort and compare how one of the world's most famous algorithms match up to less known and but capable algorithm on paper
+\subsection{KMP Pattern Matching Algorithm}
+
+To implement GoSeek's characteristic feature among other search engines, the Knuth-Morris-Pratt (KMP) pattern matching algorithm was chosen for several reasons.
+
+\begin{itemize}
+    \item \textbf{Efficiency}: Unlike the naive pattern matching approach, which can have a worst-case time complexity of \(O(nm)\), where \(n\) is the length of the text and \(m\) is the length of the pattern, KMP improves this to \(O(n + m)\) by avoiding redundant comparisons.
+    \item \textbf{Deterministic Behavior}: KMP guarantees linear time performance regardless of the structure of the text and pattern, making it reliable for real-world datasets where worst-case scenarios might frequently occur.
+    \item \textbf{Preprocessing Advantage}: The algorithm preprocesses the pattern to create a \textit{failure function}, which allows it to efficiently skip sections of the text that are guaranteed not to match.
+\end{itemize}
+
+\paragraph{How KMP Works}
+\begin{enumerate}
+    \item \textbf{Preprocessing the Pattern}: The pattern is analyzed to create a failure function that indicates the longest prefix of the pattern that is also a suffix for every position in the pattern. This table is used to avoid unnecessary comparisons during the search.
+    \item \textbf{Pattern Matching}:
+    \begin{itemize}
+        \item The text is scanned from left to right.
+        \item At each position, the algorithm compares the pattern with the current substring of the text.
+        \item If a mismatch occurs, the failure function determines the next position to continue matching, skipping over the parts of the text that cannot possibly match.
+    \end{itemize}
+    \item \textbf{Output}: The algorithm returns the starting indices of all occurrences of the pattern in the text.
+\end{enumerate}
+
+\section{Logging}
+All of the logging related code is in the \texttt{engineLogger} package. each algorithm has their own logging implementation due to their nature of portraying different information at each step of the execution as well as their own object to represent logs in a json file. For ease of implementation and following Golang's coding conventions all of the algorithms share one interface \texttt{Logger} 
+
+\begin{lstlisting}[language=Go]
+type Logger interface {
+	Log() error
+	SetStartMessage(msg string)
+	Start()
+	End()
+	SetResult(result string)
+}
+\end{lstlisting}
+\begin{itemize}
+    \item \textbf{\texttt{Log() error}}: This method is responsible for writing log entries to the appropriate output in GoSeek's case to a file respectively named by convention 'algorithmUsed'Logs.json
+
+    \item \textbf{\texttt{SetStartMessage(msg string)}}: This method sets a custom message to indicate the start of the algorithm's execution. The message is tailerod to each algorithm
+
+    \item \textbf{\texttt{Start()}}: This method signals the beginning of the logging process and sets the start timestamp
+
+    \item \textbf{\texttt{End()}}: This method marks the end of the logging process and sets the end timestamp
+
+    \item \textbf{\texttt{SetResult(result string)}}: this method sets the custom message as a result of the execution in a manner that is readable for an user
+\end{itemize}
+\subsection{BitonicSortLogger}
+The \texttt{BitonicSortLogger} is designed to capture logs accurately during the execution of the Bitonic Sort algorithm. Unlike other loggers, it uses a simple \texttt{sync.Mutex} for thread-safe operations. This ensures that concurrent writes do not corrupt the logged data. 
+
+
+All logging methods in the \texttt{BitonicSortLogger} adhere to a strict locking protocol:
+1. **Acquire Lock:** The logger object is locked using \texttt{l.mu.Lock()}, where \texttt{l} is a pointer to the \texttt{BitonicSortLogger}.
+2. **Defer Unlock:** To ensure the lock is released after execution, the recommended Go practice of deferring the \texttt{Unlock()} operation is followed:
+\begin{lstlisting}[language=Go]
+	l.mu.Lock()
+	defer l.mu.Unlock()
+\end{lstlisting}
+This prevents deadlocks and ensures consistent unlocking even if the function exits prematurely.
+
+The \texttt{BitonicSortLogger} maintains several fields to track and log details about the sorting process. The structure is as follows:
+\begin{lstlisting}[language=Go]
+type BitonicSortLog struct {
+	// regular fields inherited from the interface             
+	SpawnedThreads       int                          
+	MaxConcurrentThreads int                       
+	Result               string                  
+	Iterations           []*BitonicSortIteration 
+	CurrentMax           int                     
+
+
+type BitonicSortLogger struct {
+	mu  sync.Mutex
+	log *BitonicSortLog
+}
+\end{lstlisting}
+
+Each iteration of the sorting process is logged as a \texttt{BitonicSortIteration} object, containing:
+- \texttt{Info}: Describes the current operation (e.g., sorting in ascending or descending order).
+- \texttt{CurrentElements}: Lists the elements being sorted during the iteration.
+\begin{lstlisting}[language=Go]
+type BitonicSortIteration struct {
+	Info            string  
+	CurrentElements string 
+}
+\end{lstlisting}
+
+Since one of the most important things during an execution of a multi-threaded program is to look at the uses of these thread's the following methods allow us to track their usage
+\begin{lstlisting}[language=Go]
+func (l *BitonicSortLogger) AddThread() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.log.SpawnedThreads++
+	l.log.CurrentMax++
+	if l.log.CurrentMax > l.log.MaxConcurrentThreads {
+		l.log.MaxConcurrentThreads = l.log.CurrentMax
+	}
+}
+
+func (l *BitonicSortLogger) ReleaseThread() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.log.CurrentMax > 0 {
+		l.log.CurrentMax--
+	}
+}
+\end{lstlisting}
+Each time a thread is spawned , logs keep track of it as well as count the maximum number of alive threads at any given moment by incrementing the current maximum number by one then checking if previously seen number is bigger then currently seen max number. This process is balanced by decremening the currently max number of threads by one each time the thread is released. This information will be useful in the later chapter's of this paper to compare the efficiency of running such algorithm to algorithms that are single-threaded.
+By utilizing the \texttt{sync.Mutex} for thread-safe logging and maintaining structured logs for iterations, the \texttt{BitonicSortLogger} ensures reliable look into the program's execution.
+\subsection{QuickSortLogger}
+The \texttt{QuickSortLogger} captures detailed logs during the execution of the QuickSort algorithm. Unlike the \texttt{BitonicSortLogger}, it does not employ thread-safe mechanisms such as \texttt{sync.Mutex}, as QuickSort is inherently sequential in nature and does not involve concurrent operations. \\
+Each recursive call of the algorithm is logged as a \texttt{QuickSortIteration}, which includes:
+\begin{lstlisting}[language=Go]
+    type QuickSortIteration struct {
+	QuickSortCallLow            int    
+	QuickSortCallHigh           int    
+	PartitionFunctionCallNumber int    
+	ElementsAfterPartition      string 
+}
+\end{lstlisting}
+
+\begin{itemize}
+    \item \textbf{\texttt{QuickSortCallLow}}: Sets the rightmost position of the range being considered for partitioning for current iteration
+
+    \item \textbf{\texttt{QuickSortCallHigh}}: Sets the leftmost position of the range being considered for partitioning for current  iteration
+
+    \item \textbf{\texttt{PartitionFunctionCallNumber}}: counts how many times the recursive call has been made for current iteration
+
+    \item \textbf{\texttt{ElementsAfterPartition}}: Encapsulates elements after the iteration is over
+\end{itemize}
+Other fields of the Quick Sort logging object follows the interface defined in chapter 2.4
+
+\subsection{PatternMatchingLogger}
+Similarly Pattern Matching Logger object follows the logger interface with its own iteration object 
+\begin{lstlisting}[language=Go]
+    type PatternMatchIteration struct {
+	Document                string 
+	TotalPatternOccurrences int    
+	PatternsDetectedIndexes []int  
+}
+\end{lstlisting}
+\begin{itemize}
+    \item \textbf{\texttt{Document}}: Current document name the engine is searching through
+
+    \item \textbf{\texttt{TotalpatternOccurances}}: how many times the pattern has occurred in a document
+
+    \item \textbf{\texttt{PatternsDetectedIndexes}}: Starting indexes of the document where pattern is found 
+\end{itemize}
+
+\section{Engine}
+    Engine package encapsulates the HTML engine of GoSeek. It operates on document objects (described in chapter 2.2) by reading a json file generated by GoSeek itself (More on the file generation in the later chapter). Engine's primary functionality is to calculate TF-IDF of all of the documents relative to the terms entered by the user. It is calculated as follows
+    \begin{enumerate}
+    \item \textbf{Term Frequency (TF):}
+    \[
+    TF(t, d) = \frac{\text{Number of occurrences of term } t \text{ in document } d}{\text{Total number of terms in document } d}
+    \]
+
+    \item \textbf{Inverse Document Frequency (IDF):}
+    \[
+    IDF(t) = \log\left(\frac{\text{Total number of documents}}{\text{Number of documents containing term } t}\right)
+    \]
+
+    \item \textbf{TF-IDF Score:}
+    \[
+    TF\text{-}IDF(t, d) = TF(t, d) \times IDF(t)
+    \]
+\end{enumerate}
+Terms frequent in a document but rare across the corpus receive higher TF-IDF scores, making them more significant for identifying the document's content. \\
+After calculation of the TF-IDF scores documents with non-zero scores are passed to user selected sorting algorithm for later processing.
+
+\section{CMD package}
+cmd package is the root of the application. It houses GoSeek's commands with which user interacts and performs searches. The package is powered by Cobra library for CLI tools \cite{cobra}.
+
+\subsection{Command: crawl}
+\textbf{crawl} command was implemented for pure user convenience to test and get a feel of GoSeek's capabilities without actually exposing their own data beforehand. This command crawl's wikipedia pages using GoColly web scraping library\cite{colly}. 
+\\ The articles are chosen at random and user has freedom of how many articles to download by using flags
+Example usage of the \textbf{crawl} command is as follows - `crawl 1000`
+\subsection{Command: parse}
+\textbf{parse} command was implemented to turn user data into a json file for later use.
+`parse` command does two things 
+\begin{itemize}
+    \item Extract the \texttt{\textless p\textgreater} tags from crawled data via GoQuery library \cite{goquery}.Since \texttt{\textless p\textgreater} tags can contain non ASCII characters, the following regex expression is used to trim the each word in the document - \textbf{[\textbackslash{}\^{}\textbackslash{}w\textbackslash{}s]+}
+    this reduces the searchable texts to only numbers and alphabet characters. Next step is to stem the word since in any given document the same word can occur in any kind of variation such as run and running , while they are spelled differently , they describe the same context for a search engine. After this the unique words are written in a json file along with how many times they occur in a given document.
+    The file has the following structure:
+    \begin{lstlisting}
+    [
+    {
+        "documentName":"occurance count"  integer
+    }
+    ..///
+    ]
+\end{lstlisting}
+    After saving the file, \textbf{parse} command moves on to create a similar file for searching for patterns inside each document. Parsing for pattern matching is simple - extract \texttt{\textless p\textgreater} tags from html documents, remove non-ASCII characters and save the whole content as one string. The file has the following structure:
+        \begin{lstlisting}
+    [
+    {
+        "documentName":"content taken from p tags
+    }
+    ..///
+    ]
+\end{lstlisting}
+    After the \textbf{parse} command is executed successfully , engine is ready to perform searches
+\end{itemize}
+
+\subsection{Command: search}
+\textbf{search} Command lets the user search for a related documents based on input. Below is the example of how search command is used
+\begin{verbatim}
+search docs.json boston tea party --quickSort
+search docs.json boston tea party --bitonicSort --desc
+\end{verbatim}
+\begin{itemize}
+    \item docs.json represents the file in which the engine has to search through (can be generated by combination \textbf{crawl} and \textbf{parse} commands
+    \item 'boston tea party' represents the user's search query
+    \item flags are specified by `--` in the first example sorting algorithm is Quick Sort, in the second one Bitonic Sort with an additional flag of sorting matched documents in a descending order.
+\end{itemize}
+Before the user's search query hits the engine , the input is split on spaces, stemmed and then given to the engine ,The process ensures that the words are identified more accurately by reducing variations, such as different verb tenses or plural forms. Only after that the input is passed to the search engine. This helper function can be found in `/cmd/helpers.go`
+
+\subsection{Command: patternMatch}
+\textbf{patternMatch} command operates in the same manner as \textbf{search} command. Using a json file in which the pattern's are searched. following is the example usage of the command
+\begin{verbatim}
+patternMatch pmdocs.json pattern i am searching for
+\end{verbatim}
+Since pattern matching needs to be exact, there is no manipulation to user's input.

@@ -1,0 +1,14 @@
+\chapter{Introduction}
+In an era dominated by information and Big Data, its organization and efficient analysis has become an issue which even large scale search engines such as Google and Bing find their limitations in a form of biases introduced by advertising algorithms and the absence of pattern matching.
+This thesis explores the design and implementation of a Golang based CLI (Command Line Interface) tool "Goseek" leveraging techniques such as TF-IDF(Term Frequence-Inverse Document Frequency)\cite{wikipedia_tf_idf} ranking and KMP Pattern Matching\cite{wikipedia_kmp} \\
+The purpose of search engines are to accurately and efficiently provide users with relevant information close to the search query, biases must be avoided at all costs.
+This is where traditional search engines fail and prioritize profitability but compromise precision. \\
+TF-IDF is a well renowned method among information retrieval techniques, designed to evaluate the relevance of the terms (user's query) within a document relative to a corpus.
+By adapting TF-IDF for ranking terms within a document Goseek ensures unbiased and contextually accurate outputs enhancing user experience. \\
+Benchmarking and optimization also play a pivotal role in Goseek's efficiency.
+Sorting algorithms like quick-sort and bitonic-sort have been implemented within the project to handle large datasets.
+The comparison of this techniques provides valuable insight to how  cost-efficient their utilization might be in real-world scenarios. \\
+Hypothesis - A search engine built using Golang with TF-IDF and pattern matching can outperform traditional advertisement-driven engines such as Google,Bing in delivering contextually relevant and accurate results while also addressing unmet need for advanced pattern matching features.
+The thesis argues that combination of TF-IDF ranking, KMP pattern matching and efficient sorting techniques , implemented in a robust and concurrent programming language like Golang, can lead to a superior search engine by prioritizing accuracy and efficiency over advertisement and addressing critical limitations in current search technologies.
+Benchmarks demonstrate system's architectural design to scale and adapt for future enhancements.
+This project is aimed to contribute a practical solution to evolving demand of information retrieval
